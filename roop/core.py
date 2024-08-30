@@ -27,7 +27,7 @@ from roop.face_util import extract_face_images
 from roop.ProcessEntry import ProcessEntry
 from roop.ProcessMgr import ProcessMgr
 from roop.ProcessOptions import ProcessOptions
-from roop.capturer import get_video_frame_total
+from roop.capturer import get_video_frame_total, release_video
 
 
 clip_text = None
@@ -214,7 +214,9 @@ def batch_process_regular(files:list[ProcessEntry], masking_engine:str, new_clip
     mask = imagemask["layers"][0] if imagemask is not None else None
     if len(roop.globals.INPUT_FACESETS) <= selected_index:
         selected_index = 0
-    options = ProcessOptions(get_processing_plugins(masking_engine), roop.globals.distance_threshold, roop.globals.blend_ratio, roop.globals.face_swap_mode, selected_index, new_clip_text, mask, num_swap_steps, False)
+    options = ProcessOptions(get_processing_plugins(masking_engine), roop.globals.distance_threshold, roop.globals.blend_ratio,
+                              roop.globals.face_swap_mode, selected_index, new_clip_text, mask, num_swap_steps,
+                              roop.globals.subsample_size, False)
     process_mgr.initialize(roop.globals.INPUT_FACESETS, roop.globals.TARGET_FACES, options)
     batch_process(files, use_new_method)
     return

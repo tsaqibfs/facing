@@ -44,6 +44,7 @@ Please refer to the [wiki](https://github.com/C0untFloyd/roop-unleashed/wiki).
 
 - Windows: run the `windows_run.bat` from the Installer.
 - Linux: `python run.py`
+- Dockerfile - `docker build -t roop-unleashed .`
 
 <a target="_blank" href="https://colab.research.google.com/github/C0untFloyd/roop-unleashed/blob/main/roop-unleashed.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
@@ -58,6 +59,31 @@ Additional commandline arguments are currently unsupported and settings should b
 
 
 ### Changelog
+
+**15.07.2024** v4.1.1
+
+- Bugfix: Post-processing after swapping
+
+
+**14.07.2024** v4.1.0
+
+- Added subsample upscaling to increase swap resolution
+- Upgraded gradio
+
+
+**12.05.2024** v4.0.0
+
+- Bugfix: Unnecessary init every frame in live-cam
+- Bugfix: Installer downloading insightface package each run
+- Added xseg masking to live-cam
+- Added realesrganx2 to frame processors
+- Upgraded some requirements
+- Added subtypes and different model support to frame processors
+- Allow frame processors to change resolutions of videos
+- Different OpenCV Cap for MacOS Virtual Cam
+- Added complete frame processing to extras tab
+- Colorize, upscale and misc filters added
+
 
 **22.04.2024** v3.9.0
 
