@@ -27,15 +27,21 @@ def prepare_environment():
     os.environ["GRADIO_TEMP_DIR"] = os.environ["TEMP"]
     os.environ['GRADIO_ANALYTICS_ENABLED'] = '0'
 
-
 def run():
     from roop.core import decode_execution_providers, set_display_ui
 
     prepare_environment()
 
     set_display_ui(show_msg)
+    if roop.globals.CFG.provider == "cuda" and util.has_cuda_device() == False:
+       roop.globals.CFG.provider = "cpu"
+
     roop.globals.execution_providers = decode_execution_providers([roop.globals.CFG.provider])
-    print(f'Using provider {roop.globals.execution_providers} - Device:{util.get_device()}')    
+    gputype = util.get_device()
+    if gputype == 'cuda':
+        util.print_cuda_info()
+        
+    print(f'Using provider {roop.globals.execution_providers} - Device:{gputype}')
     
     run_server = True
     uii.ui_restart_server = False

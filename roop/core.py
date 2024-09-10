@@ -14,6 +14,7 @@ import signal
 import torch
 import onnxruntime
 import pathlib
+import argparse
 
 from time import time
 
@@ -47,9 +48,12 @@ warnings.filterwarnings('ignore', category=UserWarning, module='torchvision')
 def parse_args() -> None:
     signal.signal(signal.SIGINT, lambda signal_number, frame: destroy())
     roop.globals.headless = False
+
+    program = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=100))
+    program.add_argument('--server_share', help='Public server', dest='server_share', action='store_true', default=False)
+    program.add_argument('--cuda_device_id', help='Index of the cuda gpu to use', dest='cuda_device_id', type=int, default=0)
+    roop.globals.startup_args = program.parse_args()
     # Always enable all processors when using GUI
-    if len(sys.argv) > 1:
-        print('No CLI args supported - use Settings Tab instead')
     roop.globals.frame_processors = ['face_swapper', 'face_enhancer']
 
 
@@ -58,8 +62,20 @@ def encode_execution_providers(execution_providers: List[str]) -> List[str]:
 
 
 def decode_execution_providers(execution_providers: List[str]) -> List[str]:
-    return [provider for provider, encoded_execution_provider in zip(onnxruntime.get_available_providers(), encode_execution_providers(onnxruntime.get_available_providers()))
+    list_providers = [provider for provider, encoded_execution_provider in zip(onnxruntime.get_available_providers(), encode_execution_providers(onnxruntime.get_available_providers()))
             if any(execution_provider in encoded_execution_provider for execution_provider in execution_providers)]
+    
+    try:
+        for i in range(len(list_providers)):
+            if list_providers[i] == 'CUDAExecutionProvider':
+                list_providers[i] = ('CUDAExecutionProvider', {'device_id': roop.globals.cuda_device_id})
+                torch.cuda.set_device(roop.globals.cuda_device_id)
+                break
+    except:
+        pass
+
+    return list_providers
+    
 
 
 def suggest_max_memory() -> int:
@@ -204,7 +220,7 @@ def live_swap(frame, options):
     return newframe
 
 
-def batch_process_regular(files:list[ProcessEntry], masking_engine:str, new_clip_text:str, use_new_method, imagemask, num_swap_steps, progress, selected_index = 0) -> None:
+def batch_process_regular(files:list[ProcessEntry], masking_engine:str, new_clip_text:str, use_new_method, imagemask, restore_original_mouth, num_swap_steps, progress, selected_index = 0) -> None:
     global clip_text, process_mgr
 
     release_resources()
@@ -216,7 +232,7 @@ def batch_process_regular(files:list[ProcessEntry], masking_engine:str, new_clip
         selected_index = 0
     options = ProcessOptions(get_processing_plugins(masking_engine), roop.globals.distance_threshold, roop.globals.blend_ratio,
                               roop.globals.face_swap_mode, selected_index, new_clip_text, mask, num_swap_steps,
-                              roop.globals.subsample_size, False)
+                              roop.globals.subsample_size, False, restore_original_mouth)
     process_mgr.initialize(roop.globals.INPUT_FACESETS, roop.globals.TARGET_FACES, options)
     batch_process(files, use_new_method)
     return
@@ -373,8 +389,11 @@ def run() -> None:
     if not pre_check():
         return
     roop.globals.CFG = Settings('config.yaml')
+    roop.globals.cuda_device_id = roop.globals.startup_args.cuda_device_id
     roop.globals.execution_threads = roop.globals.CFG.max_threads
     roop.globals.video_encoder = roop.globals.CFG.output_video_codec
     roop.globals.video_quality = roop.globals.CFG.video_quality
     roop.globals.max_memory = roop.globals.CFG.memory_limit if roop.globals.CFG.memory_limit > 0 else None
+    if roop.globals.startup_args.server_share:
+        roop.globals.CFG.server_share = True
     main.run()
