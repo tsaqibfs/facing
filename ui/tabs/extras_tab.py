@@ -4,6 +4,7 @@ import shutil
 import roop.utilities as util
 import roop.util_ffmpeg as ffmpeg
 import roop.globals
+from roop.utilities import clean_dir
 
 frame_filters_map = { 
     "Colorize B/W Images (Deoldify Artistic)" : {"colorizer" : {"subtype": "deoldify_artistic"}},
@@ -71,6 +72,16 @@ def extras_tab():
                         extras_video_fps = gr.Slider(minimum=0, maximum=120, value=0, label="Video FPS", step=1.0, interactive=True)
                     with gr.Column():
                         extras_create_video_from_gif=gr.Button("Create")
+                with gr.Row(variant='panel'):
+                    with gr.Column(scale=2):
+                        gr.Markdown("""
+                                    # Repair video
+
+                                    Uses FFMpeg to fix corrupt videos. 
+    """)
+                    with gr.Column():
+                        extras_repair_video=gr.Button("Repair")
+
 
         with gr.Row(variant='panel'):
             with gr.Accordion(label="Full frame processing", open=True):
@@ -90,6 +101,7 @@ def extras_tab():
     start_join_videos.click(fn=on_join_videos, inputs=[files_to_process, extras_chk_encode], outputs=[extra_files_output])
     extras_create_video.click(fn=on_extras_create_video, inputs=[files_to_process, extras_images_folder, extras_fps, extras_chk_creategif], outputs=[extra_files_output])
     extras_create_video_from_gif.click(fn=on_extras_create_video_from_gif, inputs=[files_to_process, extras_video_fps], outputs=[extra_files_output])
+    extras_repair_video.click(fn=on_extras_repair_video, inputs=[files_to_process], outputs=[extra_files_output])
     start_frame_process.click(fn=on_frame_process, inputs=[files_to_process, filterselection, upscalerselection], outputs=[extra_files_output])
 
 
@@ -139,6 +151,22 @@ def on_extras_create_video_from_gif(files,fps):
     ffmpeg.create_video_from_gif(filenames[0], destfilename)
     if os.path.isfile(destfilename):
         resultfiles.append(destfilename)
+    return resultfiles
+
+
+def on_extras_repair_video(files):
+    if files is None:
+        return None
+    
+    resultfiles = []
+    for tf in files:
+        f = tf.name
+        destfile = util.get_destfilename_from_path(f, roop.globals.output_path, '_repair')
+        ffmpeg.repair_video(f, destfile)
+        if os.path.isfile(destfile):
+            resultfiles.append(destfile)
+        else:
+            gr.Error('Repairing video failed!')
     return resultfiles
 
 
@@ -194,7 +222,7 @@ def on_frame_process(files, filterselection, upscaleselection):
         return None
 
     if roop.globals.CFG.clear_output:
-        shutil.rmtree(roop.globals.output_path)
+        clean_dir(roop.globals.output_path)
     prepare_environment()
     list_files_process : list[ProcessEntry] = []
 

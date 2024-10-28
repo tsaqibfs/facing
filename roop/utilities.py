@@ -13,6 +13,11 @@ import tempfile
 import cv2
 import zipfile
 import traceback
+import threading
+import threading
+
+from typing import Union, Any
+from contextlib import nullcontext
 
 from pathlib import Path
 from typing import List, Any
@@ -25,6 +30,10 @@ import roop.globals
 
 TEMP_FILE = "temp.mp4"
 TEMP_DIRECTORY = "temp"
+
+THREAD_SEMAPHORE = threading.Semaphore()
+NULL_CONTEXT  = nullcontext()
+
 
 # monkey patch ssl for mac
 if platform.system().lower() == "darwin":
@@ -349,3 +358,21 @@ def print_cuda_info():
         print(f'Number of CUDA devices: {torch.cuda.device_count()} Currently used Id: {torch.cuda.current_device()} Device Name: {torch.cuda.get_device_name(torch.cuda.current_device())}')
     except:
        print('No CUDA device found!')
+
+def clean_dir(path: str):
+    contents = os.listdir(path)
+    for item in contents:
+        item_path = os.path.join(path, item)
+        try:
+            if os.path.isfile(item_path):
+                os.remove(item_path)
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+        except Exception as e:
+            print(e)
+            
+
+def conditional_thread_semaphore() -> Union[Any, Any]:
+    if 'DmlExecutionProvider' in roop.globals.execution_providers or 'ROCMExecutionProvider' in roop.globals.execution_providers:
+        return THREAD_SEMAPHORE
+    return NULL_CONTEXT

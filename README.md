@@ -37,6 +37,10 @@ In the event of violation of the legal and ethical requirements of the user's co
 
 Please refer to the [wiki](https://github.com/C0untFloyd/roop-unleashed/wiki).
 
+#### macOS Installation
+Simply run the following command. It will check and install all dependencies if necessary.
+
+`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/PJF16/roop-unleashed/master/installer/macOSinstaller.sh)`
 
 
 
@@ -44,7 +48,17 @@ Please refer to the [wiki](https://github.com/C0untFloyd/roop-unleashed/wiki).
 
 - Windows: run the `windows_run.bat` from the Installer.
 - Linux: `python run.py`
-- Dockerfile - `docker build -t roop-unleashed .`
+- macOS: `sh runMacOS.sh`
+- Dockerfile:
+  ```shell
+  docker build -t roop-unleashed . && docker run -t \
+    -p 7860:7860 \
+    -v ./config.yaml:/app/config.yaml \
+    -v ./models:/app/models \
+    -v ./temp:/app/temp \
+    -v ./output:/app/output \
+    roop-unleashed
+  ```
 
 <a target="_blank" href="https://colab.research.google.com/github/C0untFloyd/roop-unleashed/blob/main/roop-unleashed.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
@@ -59,6 +73,45 @@ Additional commandline arguments are currently unsupported and settings should b
 
 
 ### Changelog
+
+**28.9.2024** v4.3.1
+
+- Bugfix: Several possible memory leaks
+- Added different output modes, e.g. to virtual cam stream
+- New swapping mode "All input faces"
+- Average total fps displayed and setting for autorun
+
+
+**16.9.2024** v4.2.8
+
+- Bugfix: Starting roop-unleashed without NVIDIA gpu but cuda option enabled
+- Bugfix: Target Faces couldn't be moved left/right
+- Bugfix: Enhancement and upscaling working again in virtual cam
+- Corrupt videos caught when adding to target files, displaying warning msg
+- Source Files Component cleared after face detection to release temp files
+- Added masking and mouth restore options to virtual cam
+
+
+**9.9.2024** v4.2.3
+
+- Hotfix for gradio pydantic issue with fastapi
+- Upgraded to Gradio 4.43 hoping it will fix remaining issues
+- Added new action when no face detected -> use last swapped
+- Specified image format for image controls - opening new tabs on preview images possible again!
+- Hardcoded image output format for livecam to jpeg - might be faster than previous webp
+- Chain events to be only executed if previous was a success
+
+
+**5.9.2024** v4.2.0
+
+- Added ability to move input & target faces order
+- New CLI Arguments override settings
+- Small UI changes to faceswapping tab
+- Added mask option and code for restoration of original mouth area
+- Updated gradio to v4.42.0
+- Added CLI Arguments --server_share and --cuda_device_id
+- Added webp image support
+
 
 **15.07.2024** v4.1.1
 
